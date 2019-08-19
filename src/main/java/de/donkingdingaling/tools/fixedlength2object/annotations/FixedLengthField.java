@@ -12,6 +12,5 @@ public @interface FixedLengthField {
     int length();
     Padding padding() default Padding.LEFT;
     char paddingCharacter() default ' ';
-    Class type();
-    String format();
+    String format() default "";
 }
