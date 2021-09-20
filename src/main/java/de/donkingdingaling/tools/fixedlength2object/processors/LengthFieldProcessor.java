@@ -3,7 +3,6 @@ package de.donkingdingaling.tools.fixedlength2object.processors;
 import de.donkingdingaling.tools.fixedlength2object.annotations.*;
 import de.donkingdingaling.tools.fixedlength2object.converter.Converter;
 import de.donkingdingaling.tools.fixedlength2object.exception.ConversionException;
-import de.donkingdingaling.tools.fixedlength2object.exception.DynamicLengthNotFoundException;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -22,7 +21,7 @@ public class LengthFieldProcessor<TYPE> {
         initializeLengthFields();
     }
 
-    public String fromJavaObject(TYPE object) throws ReflectiveOperationException, DynamicLengthNotFoundException, IntrospectionException {
+    public String fromJavaObject(TYPE object) throws ReflectiveOperationException, IntrospectionException {
         if (isFixedLengthEntity()) {
             StringBuilder stringBuilder = new StringBuilder();
             for (Field x : sortedLengthFields) {
@@ -35,7 +34,7 @@ public class LengthFieldProcessor<TYPE> {
         }
     }
 
-    public TYPE toJavaObject(String fixedLengthRow) throws ReflectiveOperationException, DynamicLengthNotFoundException, IntrospectionException {
+    public TYPE toJavaObject(String fixedLengthRow) throws ReflectiveOperationException, IntrospectionException {
         if (isFixedLengthEntity()) {
             TYPE instance = createInstance();
 
@@ -52,7 +51,7 @@ public class LengthFieldProcessor<TYPE> {
         }
     }
 
-    private void fromJavaField(Field field, TYPE instance, StringBuilder builder) throws ReflectiveOperationException, DynamicLengthNotFoundException, IntrospectionException {
+    private void fromJavaField(Field field, TYPE instance, StringBuilder builder) throws ReflectiveOperationException, IntrospectionException {
         int length = getLength(field, instance);
         Converter converter = getConverter(field);
         String stringValue = null;
@@ -80,7 +79,7 @@ public class LengthFieldProcessor<TYPE> {
         }
     }
 
-    private Object toJavaFieldValue(Field field, String fixedLengthRow, Integer start, TYPE instance) throws ReflectiveOperationException, DynamicLengthNotFoundException, ConversionException, IntrospectionException {
+    private Object toJavaFieldValue(Field field, String fixedLengthRow, Integer start, TYPE instance) throws ReflectiveOperationException, ConversionException, IntrospectionException {
         int length = getLength(field, instance);
         String stringValue = fixedLengthRow.substring(start, start + length).trim();
         Converter converter = getConverter(field);
