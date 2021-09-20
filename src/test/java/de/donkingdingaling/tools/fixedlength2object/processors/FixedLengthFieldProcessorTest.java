@@ -1,12 +1,14 @@
 package de.donkingdingaling.tools.fixedlength2object.processors;
 
 import de.donkingdingaling.tools.fixedlength2object.processors.testclasses.Customer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FixedLengthFieldProcessorTest {
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
     }
 
@@ -37,7 +39,7 @@ class FixedLengthFieldProcessorTest {
         assertEquals(expectedCustomer, actualCustomer);
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
     }
 }

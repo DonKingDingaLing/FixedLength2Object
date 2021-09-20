@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Padding {
-    Alignment alignment() default Alignment.LEFT;
+    Alignment alignment() default Alignment.RIGHT;
     char paddingCharacter() default ' ';
 }
