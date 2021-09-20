@@ -12,6 +12,6 @@ import java.lang.annotation.Target;
 public @interface FixedLengthField {
     int order();
     int length();
-    Padding padding();
+    Padding padding() default @Padding();
     TypeInformation typeInformation() default @TypeInformation(type = String.class, converter = DefaultConverter.class);
 }

@@ -12,6 +12,6 @@ import java.lang.annotation.Target;
 public @interface DynamicLengthField {
     int order();
     String lengthField();
-    Padding padding();
+    Padding padding() default @Padding();
     TypeInformation typeInformation() default @TypeInformation(type = String.class, converter = DefaultConverter.class);
 }

@@ -1,7 +1,6 @@
 package de.donkingdingaling.tools.fixedlength2object.annotations;
 
 import de.donkingdingaling.tools.fixedlength2object.converter.Converter;
-import de.donkingdingaling.tools.fixedlength2object.converter.DefaultConverter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
