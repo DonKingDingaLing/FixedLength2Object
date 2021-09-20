@@ -1,33 +1,31 @@
 package de.donkingdingaling.tools.fixedlength2object.processors;
 
-import de.donkingdingaling.tools.fixedlength2object.annotations.FixedLengthEntity;
-import de.donkingdingaling.tools.fixedlength2object.annotations.FixedLengthField;
-import de.donkingdingaling.tools.fixedlength2object.annotations.Padding;
+import de.donkingdingaling.tools.fixedlength2object.annotations.*;
+import de.donkingdingaling.tools.fixedlength2object.converter.Converter;
+import de.donkingdingaling.tools.fixedlength2object.exception.ConversionException;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class FixedLengthFieldProcessor<Type> {
-    private Class type;
+public class LengthFieldProcessor<TYPE> {
+    private Class<?> type;
     private Map<Integer, Integer> orderToStart;
-    
-    public FixedLengthFieldProcessor(Class type) {
+    private List<Field> sortedLengthFields;
+
+    public LengthFieldProcessor(Class<?> type) {
         this.type = type;
     }
 
-    public String objectToString(Type object) {
-        if(isFixedLengthEntity(type)) {
-            Field[] fields = type.getDeclaredFields();
+    public String fromJavaObject(TYPE object) {
+        if(isFixedLengthEntity()) {
             StringBuilder stringBuilder = new StringBuilder();
-
-            Arrays.stream(fields)
-                    .filter(this::isFixedLengthField)
-                    .sorted(this::sortByOrder)
-                    .forEach(x -> writeValueToString(x, object, stringBuilder));
+            initializeLengthFields();
+            sortedLengthFields.forEach(x -> writeValueToString(x, object, stringBuilder));
 
             return stringBuilder.toString();
         } else {
@@ -35,14 +33,14 @@ public class FixedLengthFieldProcessor<Type> {
         }
     }
 
-    public Type stringToObject(String fixedLengthRow) {
+    public TYPE toJavaObject(String fixedLengthRow) {
         if(isFixedLengthEntity(type)) {
-            Type instance = createInstance();
+            TYPE instance = createInstance();
 
             Field[] fields = type.getDeclaredFields();
             
             fields = Arrays.stream(fields)
-                    .filter(this::isFixedLengthField)
+                    .filter(this::isLengthField)
                     .sorted(this::sortByOrder)
                     .toArray(Field[]::new);
             
@@ -66,7 +64,7 @@ public class FixedLengthFieldProcessor<Type> {
         return firstOrder < secondOrder ? -1 : 1;
     }
 
-    private void writeValueToString(Field field, Type instance, StringBuilder builder) {
+    private void writeValueToString(Field field, TYPE instance, StringBuilder builder) {
         boolean accessible = field.isAccessible();
         field.setAccessible(true);
 
@@ -76,7 +74,7 @@ public class FixedLengthFieldProcessor<Type> {
 
     }
 
-    private void writeValueToField(Field field, Integer start, Type instance, String fixedLengthRow) {
+    private void writeValueToField(Field field, Integer start, TYPE instance, String fixedLengthRow) {
         boolean accessible = field.isAccessible();
         field.setAccessible(true);
 
@@ -116,46 +114,91 @@ public class FixedLengthFieldProcessor<Type> {
         }
     }
 
-    private void determineFieldString(Field field, Type instance, StringBuilder builder) {
+    private void determineFieldString(Field field, TYPE instance, StringBuilder builder) throws ReflectiveOperationException {
+        int length = getLength();
+        TypeInformation typeInformation = getTypeInformation(field);
+        Converter converter = typeInformation.converter().newInstance();
         FixedLengthField fieldAnnotation = field.getAnnotation(FixedLengthField.class);
         String stringValue = null;
 
         try {
-            stringValue = String.valueOf(field.get(instance));
-        } catch (IllegalAccessException e) {
+            stringValue = converter.fromJavaType(field.get(instance));
+        } catch (IllegalAccessException | ConversionException e) {
             throw new IllegalArgumentException("Could not set value on field" + field.getName());
         }
 
-        if(stringValue.length() > fieldAnnotation.length()) {
-            throw new IllegalArgumentException("Field lentgh out of bounds");
+        if(stringValue.length() > length) {
+            throw new IllegalArgumentException("Field length out of bounds");
         }
 
-        int n = fieldAnnotation.length() - stringValue.length();
+        int n = length - stringValue.length();
         String paddingString = IntStream.range(0, n)
-                .mapToObj(i -> String.valueOf(fieldAnnotation.paddingCharacter()))
+                .mapToObj(i -> String.valueOf(getPadding(field).paddingCharacter()))
                 .collect(Collectors.joining(""));
 
-        if(fieldAnnotation.padding() == Padding.LEFT) {
-            stringValue = paddingString + stringValue;
+        if(getPadding(field).alignment() == Alignment.LEFT) {
+            builder.append(paddingString)
+                    .append(stringValue);
         } else {
-            stringValue += paddingString;
+            builder.append(stringValue)
+                    .append(paddingString);
         }
-        builder.append(stringValue);
     }
 
-    private Type createInstance() {
+    private TYPE createInstance() {
         try {
-            return (Type)type.getDeclaredConstructor().newInstance();
+            return (TYPE)type.getDeclaredConstructor().newInstance();
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException("No accessible constructor declared in type: " + type.getName());
         }
     }
 
-    private boolean isFixedLengthEntity(Class type) {
-        return type.isAnnotationPresent(FixedLengthEntity.class);
+    private boolean isFixedLengthEntity() {
+        return type.isAnnotationPresent(LengthEntity.class);
     }
 
-    private boolean isFixedLengthField(Field field) {
-        return field.isAnnotationPresent(FixedLengthField.class);
+    private boolean isLengthField(Field field) {
+        return field.isAnnotationPresent(FixedLengthField.class)
+                || field.isAnnotationPresent(DynamicLengthField.class);
+    }
+
+    private Padding getPadding(Field field) {
+        if(field.isAnnotationPresent(Padding.class)) {
+            return field.getAnnotation(Padding.class);
+        } else if(field.isAnnotationPresent(DynamicLengthField.class)) {
+            DynamicLengthField dynamicLengthField = field.getAnnotation(DynamicLengthField.class);
+            return dynamicLengthField.padding();
+        } else {
+            FixedLengthField fixedLengthField = field.getAnnotation(FixedLengthField.class);
+            return fixedLengthField.padding();
+        }
+    }
+
+    private TypeInformation getTypeInformation(Field field) {
+        if(field.isAnnotationPresent(TypeInformation.class)) {
+            return field.getAnnotation(TypeInformation.class);
+        } else if(field.isAnnotationPresent(DynamicLengthField.class)) {
+            DynamicLengthField dynamicLengthField = field.getAnnotation(DynamicLengthField.class);
+            return dynamicLengthField.typeInformation();
+        } else {
+            FixedLengthField fixedLengthField = field.getAnnotation(FixedLengthField.class);
+            return fixedLengthField.typeInformation();
+        }
+    }
+
+    private int getLength() {
+        // FIXME Impelment
+        return 0;
+    }
+
+    private void initializeLengthFields() {
+        if(sortedLengthFields == null) {
+            Field[] fields = type.getDeclaredFields();
+
+            sortedLengthFields = Arrays.stream(fields)
+                    .filter(this::isLengthField)
+                    .sorted(this::sortByOrder)
+                    .collect(Collectors.toList());
+        }
     }
 }

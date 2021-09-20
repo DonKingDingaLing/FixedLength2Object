@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface FixedLengthField {
+public @interface DynamicLengthField {
     int order();
-    int length();
+    String lengthField();
     Padding padding();
     TypeInformation typeInformation() default @TypeInformation(type = String.class, converter = DefaultConverter.class);
 }

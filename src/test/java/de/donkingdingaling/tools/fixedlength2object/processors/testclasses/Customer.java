@@ -1,12 +1,11 @@
 package de.donkingdingaling.tools.fixedlength2object.processors.testclasses;
 
-import de.donkingdingaling.tools.fixedlength2object.annotations.FixedLengthEntity;
-import de.donkingdingaling.tools.fixedlength2object.annotations.FixedLengthField;
-import de.donkingdingaling.tools.fixedlength2object.annotations.Padding;
+import de.donkingdingaling.tools.fixedlength2object.annotations.*;
 
-@FixedLengthEntity
+@LengthEntity
 public class Customer {
-    @FixedLengthField(order = 1, length = 40, padding = Padding.RIGHT)
+    @Padding(alignment = Alignment.RIGHT)
+    @FixedLengthField(order = 1, length = 40)
     private String name;
     @FixedLengthField(order = 2, length = 10)
     private int amountOfOrders;

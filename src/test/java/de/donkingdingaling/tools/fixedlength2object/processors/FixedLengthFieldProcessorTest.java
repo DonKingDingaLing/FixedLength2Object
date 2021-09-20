@@ -17,8 +17,8 @@ class FixedLengthFieldProcessorTest {
         expectedCustomer.setAmountOfOrders(5);
 
         String stringCustomer = "John Doe                                         5          ";
-        FixedLengthFieldProcessor<Customer> processor = new FixedLengthFieldProcessor<>(Customer.class);
-        Customer actualCustomer = processor.stringToObject(stringCustomer);
+        LengthFieldProcessor<Customer> processor = new LengthFieldProcessor<>(Customer.class);
+        Customer actualCustomer = processor.toJavaObject(stringCustomer);
 
         assertEquals(expectedCustomer.getName(), actualCustomer.getName());
         assertEquals(expectedCustomer.getAmountOfOrders(), actualCustomer.getAmountOfOrders());
@@ -31,8 +31,8 @@ class FixedLengthFieldProcessorTest {
         customer.setAmountOfOrders(5);
 
         String expectedCustomer = "John Doe                                         5       0.0";
-        FixedLengthFieldProcessor<Customer> processor = new FixedLengthFieldProcessor<>(Customer.class);
-        String actualCustomer = processor.objectToString(customer);
+        LengthFieldProcessor<Customer> processor = new LengthFieldProcessor<>(Customer.class);
+        String actualCustomer = processor.fromJavaObject(customer);
 
         assertEquals(expectedCustomer, actualCustomer);
     }
