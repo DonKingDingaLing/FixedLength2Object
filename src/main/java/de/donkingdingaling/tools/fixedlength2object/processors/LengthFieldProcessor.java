@@ -54,11 +54,12 @@ public class LengthFieldProcessor<TYPE> {
     private void fromJavaField(Field field, TYPE instance, StringBuilder builder) throws ReflectiveOperationException, IntrospectionException {
         int length = getLength(field, instance);
         Converter converter = getConverter(field);
+        String format = getTypeInformation(field).format();
         String stringValue = null;
 
         try {
             Object fieldValue = new PropertyDescriptor(field.getName(), type).getReadMethod().invoke(instance);
-            stringValue = converter.fromJavaType(fieldValue);
+            stringValue = converter.fromJavaType(fieldValue, format);
         } catch (IllegalAccessException | ConversionException | IntrospectionException e) {
             throw new IllegalArgumentException("Could not set value on field" + field.getName());
         }
@@ -83,7 +84,8 @@ public class LengthFieldProcessor<TYPE> {
         int length = getLength(field, instance);
         String stringValue = fixedLengthRow.substring(start, start + length).trim();
         Converter converter = getConverter(field);
-        return converter.toJavaType(stringValue);
+        String format = getTypeInformation(field).format();
+        return converter.toJavaType(stringValue, format);
     }
 
     private TYPE createInstance() {
